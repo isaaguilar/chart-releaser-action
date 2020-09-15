@@ -32,6 +32,9 @@ Usage: $(basename "$0") <options>
     -u, --charts-repo-url    The GitHub Pages URL to the charts repo (default: https://<owner>.github.io/<repo>)
     -o, --owner              The repo owner
     -r, --repo               The repo name
+
+    --chart-repo             The relative path to the chart git-repo
+    --index-repo             The relative path to the index git-repo (ie where "index.yaml" is)
 EOF
 }
 
@@ -41,15 +44,14 @@ main() {
     local owner=
     local repo=
     local charts_repo_url=
+    local chart_repo=
+    local index_repo=
+    start_dir=`pwd`
 
     parse_command_line "$@"
 
-    # paths to target repos
-    charts_repo=/helm-charts
-    index_repo=/index-repo
-
-    # Do all the work for chart lookups in charts_repo
-    cd "${charts_repo}"
+    # Do all the work for chart lookups in chart_repo
+    cd "${chart_repo}"
 
     echo "$repo"
     local repo_root
@@ -82,7 +84,7 @@ main() {
         done
 
         release_charts
-        update_index "${index_repo}"
+        update_index
     else
         echo "Nothing to do. No chart changes detected."
     fi
@@ -147,6 +149,26 @@ parse_command_line() {
                     exit 1
                 fi
                 ;;
+            --chart-repo)
+                if [[ -n "${2:-}" ]]; then
+                    chart_repo="$2"
+                    shift
+                else
+                    echo "ERROR: '--chart-repo' cannot be empty." >&2
+                    show_help
+                    exit 1
+                fi
+                ;;
+            --index-repo)
+                if [[ -n "${2:-}" ]]; then
+                    index_repo="$2"
+                    shift
+                else
+                    echo "ERROR: '--index-repo' cannot be empty." >&2
+                    show_help
+                    exit 1
+                fi
+                ;;
             *)
                 break
                 ;;
@@ -169,6 +191,14 @@ parse_command_line() {
 
     if [[ -z "$charts_repo_url" ]]; then
         charts_repo_url="https://$owner.github.io/$repo"
+    fi
+
+    if [[ -z "$chart_repo" ]]; then
+        chart_repo="."
+    fi
+
+    if [[ -z "$index_repo" ]]; then
+        index_repo="."
     fi
 }
 
@@ -232,15 +262,14 @@ update_index() {
     echo 'Updating charts repo index...'
 
     set -x
-    CWD=$(pwd)
     cr index -o "$owner" -r "$repo" -c "$charts_repo_url"
-    if [[ -n "$1" ]];then
-	    index=$1
-    else
-	    index=${CWD}
+
+    if [ "${chart_repo}" != "${index_repo}" ];then
+        mv .cr-index "${index}"
+        cd "${start_dir}"
+        cd "${index_repo}"
     fi
-    mv ${CWD}/.cr-index "${index}"
-    cd ${index}
+
     gh_pages_worktree=$(mktemp -d)
 
     git worktree add "$gh_pages_worktree" gh-pages
