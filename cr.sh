@@ -44,6 +44,13 @@ main() {
 
     parse_command_line "$@"
 
+    # paths to target repos
+    charts_repo=/helm-charts
+    index_repo=/index-repo
+
+    # Do all the work for chart lookups in charts_repo
+    cd "${charts_repo}"
+
     echo "$repo"
     local repo_root
     repo_root=$(git rev-parse --show-toplevel)
@@ -75,7 +82,7 @@ main() {
         done
 
         release_charts
-        update_index
+        update_index "${index_repo}"
     else
         echo "Nothing to do. No chart changes detected."
     fi
@@ -225,9 +232,15 @@ update_index() {
     echo 'Updating charts repo index...'
 
     set -x
-
+    CWD=$(pwd)
     cr index -o "$owner" -r "$repo" -c "$charts_repo_url"
-
+    if [[ -n "$1" ]];then
+	    index=$1
+    else
+	    index=${CWD}
+    fi
+    mv ${CWD}/.cr-index "${index}"
+    cd ${index}
     gh_pages_worktree=$(mktemp -d)
 
     git worktree add "$gh_pages_worktree" gh-pages
