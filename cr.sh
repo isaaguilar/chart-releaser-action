@@ -265,8 +265,8 @@ update_index() {
     cr index -o "$owner" -r "$repo" -c "$charts_repo_url"
 
     if [ "${chart_repo}" != "${index_repo}" ];then
-        mv .cr-index "${index}"
         cd "${start_dir}"
+        mv "${chart_repo}/.cr-index" "${index_repo}"
         cd "${index_repo}"
     fi
 
