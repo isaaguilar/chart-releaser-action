@@ -52,6 +52,8 @@ main() {
 
     # Do all the work for chart lookups in chart_repo
     cd "${chart_repo}"
+    
+    rm -rf "${index_repo}/.cr-index"||true
 
     echo "$repo"
     local repo_root
