@@ -287,6 +287,7 @@ update_index() {
     git push "$repo_url" gh-pages
 
     popd > /dev/null
+    git worktree remove "$gh_pages_worktree"
 }
 
 main "$@"
