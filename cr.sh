@@ -52,8 +52,6 @@ main() {
 
     # Do all the work for chart lookups in chart_repo
     cd "${chart_repo}"
-    
-    rm -rf "${index_repo}/.cr-index"||true
 
     echo "$repo"
     local repo_root
@@ -268,6 +266,7 @@ update_index() {
 
     if [ "${chart_repo}" != "${index_repo}" ];then
         cd "${start_dir}"
+        rm -rf "${index_repo}/.cr-index"
         mv "${chart_repo}/.cr-index" "${index_repo}"
         cd "${index_repo}"
     fi
